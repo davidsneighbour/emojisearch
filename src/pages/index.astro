@@ -1,0 +1,68 @@
+---
+import '../styles/global.css';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>GitHub Emoji Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body class="bg-gray-900 p-6 text-white">
+    <div class="max-w-4xl mx-auto">
+      <h1 class="text-3xl font-bold mb-4">GitHub Emoji Search</h1>
+      <input
+        id="search"
+        type="text"
+        placeholder="Search emojis..."
+        class="w-full px-4 py-2 border border-gray-700 bg-gray-800 text-white rounded-md mb-6"
+      />
+      <div id="results" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4"></div>
+    </div>
+
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', async () => {
+        const res = await fetch('https://api.github.com/emojis');
+        const data = await res.json();
+        const entries = Object.entries(data);
+        const emojiList = entries.map(([key, url]) => ({
+          name: key,
+          displayName: key.replace(/_/g, ' ').toLowerCase(),
+          url,
+        }));
+
+        const container = document.getElementById('results');
+        const input = document.getElementById('search');
+
+        const showRandom = () => {
+          container.innerHTML = '';
+          const shuffled = emojiList.sort(() => 0.5 - Math.random()).slice(0, 15);
+          render(shuffled);
+        };
+
+        const render = (items) => {
+          container.innerHTML = '';
+          items.forEach(({ name, displayName, url }) => {
+            const item = document.createElement('div');
+            item.className = 'flex flex-col items-center text-center';
+            item.innerHTML = `
+              <img src="${url}" alt="${name}" class="w-10 h-10 mb-1" />
+              <div class="text-xs break-words">${displayName}</div>`;
+            container.appendChild(item);
+          });
+        };
+
+        input.addEventListener('input', () => {
+          const q = input.value.trim().toLowerCase();
+          if (q.length < 2) return showRandom();
+          const results = emojiList.filter(emoji =>
+            emoji.displayName.includes(q)
+          );
+          render(results);
+        });
+
+        showRandom();
+      });
+    </script>
+  </body>
+</html>
